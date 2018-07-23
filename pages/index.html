@@ -35,16 +35,39 @@
 		(()=>{
 			var socket = io('http://192.168.5.81:3000');
 			var startx=0;
+			var starty=0;
+			var mousePad = $(".mouse-pad");
+			var mousePadHammer = new Hammer(document.querySelector('.mouse-pad'));
+			var startMove = (event) =>{
+				console.log("Starting");
+				var touch = event.touches[0] || event.changedTouches[0];
+				var startx = touch.pageX-mousePad.offset().left;
+				var starty = touch.pageY-mousePad.offset().top;
+
+				/*$(".mouse-pad")
+					.html('Status: touchmove<br>: x:'+ startx +', y: 0'+starty);*/
+			};
+			var endMove = (event) =>{
+				console.log("Finished");
+				startx =0;
+				starty = 0;
+				
+				socket.emit("end move mouse");
+			};
 			var move = (event)=>{
 				try{
 					var touchobj = event.changedTouches[0] // reference first touch point for this event
-	        		var dist = parseInt(touchobj.clientX) - startx
-	        		$(".mouse-pad").html('Status: touchmove<br> Horizontal distance traveled: ' + dist + 'px')
-	        
+	        		var dist = parseInt(touchobj.pageX) - startx
 	        		var touch = event.touches[0] || event.changedTouches[0];
-					var x = parseInt(touch.clientX);
-	  				var y = parseInt(touch.clientY);
-					socket.emit("move mouse", {x,y});
+					var x = parseInt(touch.pageX-mousePad.offset().left);
+	  				var y = parseInt(touch.pageY-mousePad.offset().top);
+
+	  				var offsetx = x - startx;
+	  				var offsety = y - starty;
+	        		$(".mouse-pad").html('Status: touchmove<br>: x:'+ offsetx +', y: 0'+offsety);
+					socket.emit("move mouse", {x:offsetx, y:offsety});
+					startx = x;
+					starty = y;
 					event.preventDefault();
 				}catch(e){
 					$(".mouse-pad").html(e);
@@ -53,9 +76,18 @@
 			}
 			$(".mouse-pad").on("mousemove", (event) =>{
 				var data = {x: event.offsetX, y: event.offsetY};
-				socket.emit("move mouse", data);
+				//socket.emit("move mouse", data);
 			});
-			document.querySelector(".mouse-pad").addEventListener('touchmove',move);
+			document.querySelector(".mouse-pad")
+				.addEventListener('touchstart',startMove);
+			document.querySelector(".mouse-pad")
+				.addEventListener('touchmove',move);
+			document.querySelector(".mouse-pad")
+				.addEventListener('touchend', endMove);
+
+			mousePadHammer.on("tap", function(ev){
+				socket.emit("tap mouse");
+			});
 
 		})();
 		

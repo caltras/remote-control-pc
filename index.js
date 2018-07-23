@@ -8,7 +8,7 @@ var path    = require("path");
 const PORT = 3000;
 var screenSize = robot.getScreenSize();
 robot.setMouseDelay(1);
-var mouse = robot.getMousePos();
+
 
 console.log("System running on "+IP+":"+PORT);
 
@@ -18,14 +18,25 @@ app.get('/', (req, res) =>{
 
 io.on('connection', (socket) =>{
   console.log('A user connected');
+  socket.on('tap mouse', (data)=>{
+  	var mouse = robot.getMousePos();
+	console.log(mouse);
+  });
   socket.on('move mouse', (data)=>{
   	
+  	var mouse = robot.getMousePos();
   	console.log("Data");
   	console.log(data);
   	console.log("Mouse")
   	console.log(mouse);
-  	//console.log(mouse.x+data.x, mouse.y+data.y);
-  	//robot.moveMouse(mouse.x+data.x, mouse.y+data.y);
+  	robot.moveMouse(mouse.x+data.x, mouse.y+data.y);
+  	
+  });
+  socket.on('end move mouse', (data)=>{
+  	console.log("End mouse move");
+  	console.log("==============");
+  	var mouse = robot.getMousePos();
+  	console.log(mouse);
   });
 });
 
